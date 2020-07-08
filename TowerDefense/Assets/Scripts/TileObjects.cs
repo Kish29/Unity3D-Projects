@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class TileObjects : MonoBehaviour
 {
@@ -19,12 +18,12 @@ public class TileObjects : MonoBehaviour
     public int zTileNum = 2;
 
     // 所有的格子信息
-    public int[] tileData;
+    private int[] _tileData = new int[4];
 
-    // 不再inspector窗口显示 
-    [HideInInspector] public int tileId = 0;
+    // 不在inspector窗口显示 
+    [HideInInspector] public int dataId = 0;
 
-    public bool debug = false;
+    [HideInInspector] public bool debug = false;
 
     private void Awake()
     {
@@ -34,17 +33,20 @@ public class TileObjects : MonoBehaviour
     // 重置地图数据
     public void Reset()
     {
-        tileData = new int[xTileNum * zTileNum];
+        _tileData = new int[xTileNum * zTileNum];
     }
 
     // 获得某个坐标对应的tileData的索引
     private int GetDataIndexFromPosition(float posX, float posZ)
     {
         var position = transform.position;
+        // 鼠标落在外面是无法编辑的
+        if (posX - position.x < 0 || posZ - position.z < 0)
+            return -1;
         int index = (int) ((posX - position.x) / tileSize) * zTileNum +
                     (int) ((posZ - position.z) / tileSize);
-        if (index < 0 || index >= tileData.Length)
-            return 0;
+        if (index >= _tileData.Length)
+            return -1;
         return index;
     }
 
@@ -52,14 +54,15 @@ public class TileObjects : MonoBehaviour
     public int GetDataFromPosition(float posX, float posZ)
     {
         int index = GetDataIndexFromPosition(posX, posZ);
-        return tileData[index];
+        return _tileData[index];
     }
 
     // 设置相应的tile数值
     public void SetDataFromPosition(float poxX, float posZ, int val)
     {
         int index = GetDataIndexFromPosition(poxX, posZ);
-        tileData[index] = val;
+        if (index != -1)
+            _tileData[index] = val;
     }
 
     // 在编辑模式显示帮助信息
@@ -67,7 +70,7 @@ public class TileObjects : MonoBehaviour
     {
         if (!debug)
             return;
-        if (tileData == null)
+        if (_tileData == null)
         {
             Debug.Log("Please Reset Data First!");
             return;
@@ -85,9 +88,34 @@ public class TileObjects : MonoBehaviour
                 transform.TransformPoint(tileSize * i, 0, drawLengthZ));
             // 自身调用TransformPoint函数，在传入的参数不是new Vector3的情况下，
             // 将自生的坐标加上传入的坐标x、y、z再转化成世界坐标返回
-            for (int j = 0; j < zTileNum; j++) // x轴方向的辅助线
+
+            // 画出置位的格子的轮廓
+            for (int j = 0; j < zTileNum; j++)
             {
+                int index = i * zTileNum + j;
+                if (index < _tileData.Length) // 绘制的格子在网格的范围内
+                {
+                    Color[] cubeColor = new Color[3];
+                    // 根据不同的状态绘制不同颜色的Cube
+                    cubeColor[0] = new Color(1, 0, 0, 0.5f);
+                    cubeColor[1] = new Color(0, 1, 0, 0.5f);
+                    cubeColor[2] = new Color(0, 0, 1, 0.5f);
+
+                    Gizmos.color = cubeColor[_tileData[index]];
+                    // DrawCube两个参数，第一个是Cube的中心坐标，第二个是Cube的大小
+                    Gizmos.DrawCube(transform.TransformPoint(i * tileSize + tileSize * 0.5f, 0,
+                            j * tileSize + tileSize * 0.5f),
+                        new Vector3(tileSize, 0.2f, tileSize));
+                }
             }
+        }
+
+        for (int j = 0; j < zTileNum; j++) // x轴方向的辅助线
+        {
+            Gizmos.color = Color.red;
+            var drawLengthX = tileSize * xTileNum;
+            Gizmos.DrawLine(transform.TransformPoint(0, 0, tileSize * j),
+                transform.TransformPoint(drawLengthX, 0, tileSize * j));
         }
     }
 
