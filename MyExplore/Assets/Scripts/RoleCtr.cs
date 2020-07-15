@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class RoleCtr : MonoBehaviour
 {
-    private CharacterController _controller;
+    //private CharacterController _controller;
 
     private float _moveSpeed = 3.0f;
 
@@ -27,18 +27,30 @@ public class RoleCtr : MonoBehaviour
     private int _jmpCounts;
     private const int JumpCountsValue = 3;
 
-    // 定义切换视角的距离
-    private int _viewDistance = 0;
+    // 定义切换视角的参数
+    private float _cameraToggleSpeed = 0f;
+
+    // 切换的方向，true为第三人称，false为第一人称
+    private bool _cameraToggle = false;
+
+    // 转换过程按V无效
+    private bool _enableChangeView = true;
+    private float _cameraToggleCounts = 0;
+    private float _cameraToggleDistance = 2.5f;
+    private float _cameraToggleTime = 0;
+
+    private float _radius;
 
     // Start is called before the first frame update
     void Start()
     {
-        _controller = GetComponent<CharacterController>();
+        //_controller = GetComponent<CharacterController>();
         _fixedFrameTime = Time.deltaTime;
+        _radius = transform.localScale.x / 2;
         if (Camera.main != null)
         {
             _cameraTransform = Camera.main.transform;
-            _cameraTransform.transform.position = transform.TransformPoint(0, 1.6f, _viewDistance);
+            _cameraTransform.transform.position = transform.TransformPoint(0, 0, 0);
             _cameraTransform.rotation = transform.rotation;
             // 相机的旋转角度与role一致
             _cameraTransform.eulerAngles = transform.eulerAngles;
@@ -79,7 +91,6 @@ public class RoleCtr : MonoBehaviour
         if (IsGrounded())
         {
             // 地面恢复次数
-            Debug.Log("I'm isGrounded!");
             _jmpCounts = JumpCountsValue;
             // 上抛初速度置零
             _parabolicSpeed = 0;
@@ -91,7 +102,7 @@ public class RoleCtr : MonoBehaviour
                 _parabolicSpeed = _jmpSpeed;
                 // 跳跃次数-1
                 _jmpCounts--;
-                
+
                 // 上升
                 motion.y += _parabolicSpeed * _fixedFrameTime;
                 _jmpTime -= _fixedFrameTime;
@@ -114,7 +125,6 @@ public class RoleCtr : MonoBehaviour
                 if (!IsGrounded())
                 {
                     // 下降是匀加速运动
-                    Debug.Log("我是分支！");
                     motion.y -= _parabolicSpeed * _fixedFrameTime;
                     _parabolicSpeed += _gravity * _fixedFrameTime;
                 }
@@ -134,25 +144,42 @@ public class RoleCtr : MonoBehaviour
         /*TransformDirection返回motion相对于世界坐标的相对偏移量！！！！！
         * Move需要传入的参数是相对于世界坐标的偏移量！！！！！(想了好久，md！)
         */
-        Debug.Log(_parabolicSpeed);
-        _controller.Move(transform.TransformDirection(motion));
-        _cameraTransform.position = transform.TransformPoint(0, 1.6f, _viewDistance);
+        // 相应的这儿就要用Translate函数
+        transform.Translate(motion);
+        //_controller.Move(transform.TransformDirection(motion));
+        // 切换视角的移动平滑移动效果
+        if (_cameraToggleTime > 0)
+        {
+            _cameraToggleSpeed += _gravity * _fixedFrameTime;
+            _cameraToggleTime -= _fixedFrameTime;
+            if (_cameraToggle)
+                _cameraToggleCounts -= _cameraToggleSpeed * _fixedFrameTime;
+            else
+                _cameraToggleCounts += _cameraToggleSpeed * _fixedFrameTime;
+        }
+        else
+        {
+            _enableChangeView = true;
+        }
+
+        _cameraTransform.position = transform.TransformPoint(0, -_cameraToggleCounts * 0.2f, _cameraToggleCounts);
     }
 
+    // 因为CharacterController的isGrounded每次调用Move函数后默认置为false，会出bug，所以用长度为物体半径的向下的射线来检测碰撞自定义地面逻辑
     private bool IsGrounded()
     {
-        return Physics.Raycast(transform.position, Vector3.down, 0.5f);
+        return Physics.Raycast(transform.position, Vector3.down, _radius);
     }
 
-    // Update is called once per frame
+// Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.V))
+        if (Input.GetKey(KeyCode.V) && _enableChangeView)
         {
-            if (_viewDistance == 0)
-                _viewDistance = -5;
-            else
-                _viewDistance = 0;
+            _cameraToggle = !_cameraToggle;
+            _cameraToggleTime = (float) Math.Sqrt(2 * _cameraToggleDistance / _gravity);
+            _cameraToggleSpeed = 0;
+            _enableChangeView = false;
         }
 
         Move();
