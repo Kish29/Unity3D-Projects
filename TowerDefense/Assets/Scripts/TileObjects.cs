@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class TileObjects : MonoBehaviour
 {
@@ -20,6 +21,9 @@ public class TileObjects : MonoBehaviour
     // 所有的格子信息
     private int[] _tileData = new int[4];
 
+    // 子物体plane
+    private Transform _plane;
+
     // 不在inspector窗口显示 
     [HideInInspector] public int dataId = 0;
 
@@ -34,6 +38,16 @@ public class TileObjects : MonoBehaviour
     public void Reset()
     {
         _tileData = new int[xTileNum * zTileNum];
+        // 重新设置plane的大小
+        foreach (var t in GetComponentsInChildren<Transform>())
+        {
+            // 获取plane的Transform
+            if (String.Compare(t.name, "TileBasic", StringComparison.Ordinal) == 0)
+                _plane = t.transform;
+        }
+
+        _plane.localScale = new Vector3((float) xTileNum / 10, 1, (float) zTileNum / 10);
+        _plane.localPosition = new Vector3((float) xTileNum / 2, 0, (float) zTileNum / 2);
     }
 
     // 获得某个坐标对应的tileData的索引
@@ -54,7 +68,7 @@ public class TileObjects : MonoBehaviour
     public int GetDataFromPosition(float posX, float posZ)
     {
         int index = GetDataIndexFromPosition(posX, posZ);
-        return _tileData[index];
+        return index == -1 ? -1 : _tileData[index];
     }
 
     // 设置相应的tile数值
@@ -100,7 +114,7 @@ public class TileObjects : MonoBehaviour
                     cubeColor[0] = new Color(1, 0, 0, 0.5f);
                     cubeColor[1] = new Color(0, 1, 0, 0.5f);
                     cubeColor[2] = new Color(0, 0, 1, 0.5f);
-
+                    // 根据格子的状态来显示不同的颜色
                     Gizmos.color = cubeColor[_tileData[index]];
                     // DrawCube两个参数，第一个是Cube的中心坐标，第二个是Cube的大小
                     Gizmos.DrawCube(transform.TransformPoint(i * tileSize + tileSize * 0.5f, 0,
