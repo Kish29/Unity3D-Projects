@@ -143,7 +143,7 @@ public class GameManager : MonoBehaviour
     }
 
     // 减少生命
-    private void SetDamage(int damage)
+    public void SetDamage(int damage)
     {
         roleLife -= damage;
         if (roleLife <= 0)

@@ -48,8 +48,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   tileSize: 1
-  xTileNum: 10
-  zTileNum: 10
+  xTileNum: 20
+  zTileNum: 20
   dataId: 2
   debug: 1
 --- !u!1 &3647714360201691525

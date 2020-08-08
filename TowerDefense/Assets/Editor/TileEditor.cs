@@ -36,8 +36,8 @@ namespace Editor
                     // 获取由鼠标位置产生的射线
                     Ray ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
                     // 计算碰撞，获得鼠标左键点击时位置对应的tile，并设置value(value会被Inspector中的Toolbar改变)
-                    Debug.Log(Physics.Raycast(ray, out var hitInfo, 2000, TileObjects.tileLayer));
-                    if (Physics.Raycast(ray, out hitInfo, 2000, TileObjects.tileLayer))
+                    // Debug.Log(Physics.Raycast(ray, out var hitInfo, 2000, TileObjects.tileLayer));
+                    if (Physics.Raycast(ray, out var hitInfo, 2000, TileObjects.tileLayer))
                     {
                         TileObjects.SetDataFromPosition(hitInfo.point.x, hitInfo.point.z, TileObjects.dataId);
                     }
